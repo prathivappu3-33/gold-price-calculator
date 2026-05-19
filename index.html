@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gold Price Calculator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f0e8;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .wrapper { width: 100%; max-width: 480px; }
+
+    .header {
+      background: #B8860B;
+      padding: 1.25rem 2rem;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header i { font-size: 26px; color: #fff; }
+    .header h1 { font-size: 20px; font-weight: 500; color: #fff; letter-spacing: 0.3px; }
+
+    .live-bar {
+      background: #f0ebe0;
+      border: 1px solid #e0d5c0;
+      border-top: none;
+      padding: 12px 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .live-card {
+      background: #fff;
+      border: 1px solid #e0d5c0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .live-card:hover { border-color: #DAA520; }
+    .live-card.active { border: 1.5px solid #DAA520; background: #FAEEDA; }
+    .live-card .karat { font-size: 10px; font-weight: 600; color: #888; letter-spacing: 0.8px; text-transform: uppercase; }
+    .live-card.active .karat { color: #854F0B; }
+    .live-card .price { font-size: 14px; font-weight: 600; color: #8B6914; margin-top: 3px; }
+    .live-card .sub { font-size: 10px; color: #aaa; margin-top: 2px; }
+    .live-card.active .sub { color: #BA7517; }
+
+    .live-status {
+      font-size: 11px;
+      color: #999;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 1.5rem 8px;
+      background: #f0ebe0;
+      border: 1px solid #e0d5c0;
+      border-top: none;
+    }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; display: inline-block; flex-shrink: 0; }
+    .dot.loading { background: #f59e0b; }
+    .dot.error { background: #ef4444; }
+
+    .calc-card {
+      background: #fff;
+      border: 1px solid #e0d5c0;
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: 1.5rem 2rem 2rem;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #bbb;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      margin-top: 1.5rem;
+    }
+    .section-label:first-of-type { margin-top: 0; }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; align-items: end; }
+    .field-row.single { grid-template-columns: 1fr; }
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-group label { font-size: 12px; color: #888; font-weight: 400; }
+
+    .karat-toggle {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid #d0c8b8;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .karat-btn {
+      padding: 9px 4px;
+      font-size: 13px;
+      font-weight: 400;
+      color: #888;
+      background: #f5f0e8;
+      border: none;
+      cursor: pointer;
+      border-right: 1px solid #d0c8b8;
+      transition: background 0.12s, color 0.12s;
+      font-family: inherit;
+    }
+    .karat-btn:last-child { border-right: none; }
+    .karat-btn.active { background: #B8860B; color: #fff; font-weight: 500; }
+
+    .rate-display {
+      background: #f5f0e8;
+      border: 1px solid #d0c8b8;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 40px;
+    }
+    .rate-display .rd-label { font-size: 12px; color: #aaa; }
+    .rate-display .rd-value { font-size: 15px; font-weight: 600; color: #B8860B; }
+
+    .suffix-wrap { position: relative; display: flex; align-items: center; }
+    .suffix-wrap input {
+      width: 100%;
+      padding: 9px 28px 9px 10px;
+      border: 1px solid #d0c8b8;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #333;
+      background: #f5f0e8;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .suffix-wrap input:focus { outline: none; border-color: #DAA520; box-shadow: 0 0 0 3px rgba(218,165,32,0.12); }
+    .suffix-wrap .suffix { position: absolute; right: 10px; font-size: 12px; color: #bbb; pointer-events: none; }
+
+    .result-box {
+      background: #f5f0e8;
+      border: 1px solid #d0c8b8;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .result-box .result-label { font-size: 12px; color: #aaa; }
+    .result-box .result-value { font-size: 15px; font-weight: 600; color: #B8860B; }
+
+    .divider { border: none; border-top: 1px solid #ede8dc; margin: 1.5rem 0 1rem; }
+
+    .breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .breakdown-item {
+      background: #f5f0e8;
+      border-radius: 8px;
+      border: 1px solid #d0c8b8;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .breakdown-item .bi-label { font-size: 11px; color: #aaa; }
+    .breakdown-item .bi-value { font-size: 15px; font-weight: 600; color: #444; }
+
+    .total-bar {
+      background: #8B6914;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    .total-bar .total-label { font-size: 14px; color: rgba(255,255,255,0.8); }
+    .total-bar .total-value { font-size: 22px; font-weight: 600; color: #fff; }
+
+    .btn-reset {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d0c8b8;
+      border-radius: 8px;
+      background: transparent;
+      color: #999;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-reset:hover { background: #f5f0e8; color: #666; }
+
+    @media (max-width: 400px) {
+      body { padding: 1rem 0.5rem; }
+      .calc-card { padding: 1.25rem 1.25rem 1.5rem; }
+      .live-bar { padding: 10px 1rem; }
+      .live-status { padding: 6px 1rem 8px; }
+      .header { padding: 1rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div class="header">
+    <i class="ti ti-coins"></i>
+    <h1>Gold Price Calculator</h1>
+  </div>
+
+  <div class="live-bar">
+    <div class="live-card active" id="lcard-18" onclick="selectKarat(18)">
+      <div class="karat">18K Gold</div>
+      <div class="price" id="lprice-18">Loading...</div>
+      <div class="sub">per gram</div>
+    </div>
+    <div class="live-card" id="lcard-22" onclick="selectKarat(22)">
+      <div class="karat">22K Gold</div>
+      <div class="price" id="lprice-22">Loading...</div>
+      <div class="sub">per gram</div>
+    </div>
+    <div class="live-card" id="lcard-24" onclick="selectKarat(24)">
+      <div class="karat">24K Gold</div>
+      <div class="price" id="lprice-24">Loading...</div>
+      <div class="sub">per gram</div>
+    </div>
+  </div>
+
+  <div class="live-status">
+    <span class="dot loading" id="status-dot"></span>
+    <span id="status-text">Fetching live prices...</span>
+  </div>
+
+  <div class="calc-card">
+
+    <p class="section-label">Base details</p>
+
+    <div class="field-row single" style="margin-bottom:12px;">
+      <div class="field-group">
+        <label>Select karat</label>
+        <div class="karat-toggle">
+          <button class="karat-btn active" id="btn-18" onclick="selectKarat(18)">18K</button>
+          <button class="karat-btn" id="btn-22" onclick="selectKarat(22)">22K</button>
+          <button class="karat-btn" id="btn-24" onclick="selectKarat(24)">24K</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <label>Gold rate (per gram)</label>
+        <div class="rate-display">
+          <span class="rd-label" id="rate-karat-label">18K rate</span>
+          <span class="rd-value" id="rate-display-val">—</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Gold weight (grams)</label>
+        <div class="suffix-wrap">
+          <input type="number" id="goldWt" placeholder="0" min="0" step="0.01" oninput="calculate()">
+          <span class="suffix">g</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row single" style="margin-top:4px;">
+      <div class="result-box">
+        <span class="result-label">Gold amount</span>
+        <span class="result-value" id="goldAmt">₹ 0.00</span>
+      </div>
+    </div>
+
+    <p class="section-label" style="margin-top:1.2rem;">Charges</p>
+
+    <div class="field-row">
+      <div class="field-group">
+        <label>Making charge %</label>
+        <div class="suffix-wrap">
+          <input type="number" id="mkCharge" placeholder="0" min="0" step="0.1" oninput="calculate()">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Making charge amt</label>
+        <div class="result-box" style="height:40px;">
+          <span class="result-value" id="mkAmt" style="font-size:14px;">₹ 0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <label>Wastage %</label>
+        <div class="suffix-wrap">
+          <input type="number" id="wasteCharge" placeholder="0" min="0" step="0.1" oninput="calculate()">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Wastage amt</label>
+        <div class="result-box" style="height:40px;">
+          <span class="result-value" id="wasteAmt" style="font-size:14px;">₹ 0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field-group">
+        <label>Tax (GST) %</label>
+        <div class="suffix-wrap">
+          <input type="number" id="taxCharge" placeholder="3" min="0" step="0.1" oninput="calculate()">
+          <span class="suffix">%</span>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Tax amt</label>
+        <div class="result-box" style="height:40px;">
+          <span class="result-value" id="taxAmt" style="font-size:14px;">₹ 0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+    <p class="section-label" style="margin-top:0;">Breakdown</p>
+    <div class="breakdown-grid">
+      <div class="breakdown-item"><span class="bi-label">Gold value</span><span class="bi-value" id="b-gold">₹ 0</span></div>
+      <div class="breakdown-item"><span class="bi-label">Making charges</span><span class="bi-value" id="b-mk">₹ 0</span></div>
+      <div class="breakdown-item"><span class="bi-label">Wastage</span><span class="bi-value" id="b-waste">₹ 0</span></div>
+      <div class="breakdown-item"><span class="bi-label">Tax (GST)</span><span class="bi-value" id="b-tax">₹ 0</span></div>
+    </div>
+
+    <div class="total-bar">
+      <span class="total-label">Total amount</span>
+      <span class="total-value" id="totalAmt">₹ 0.00</span>
+    </div>
+
+    <button class="btn-reset" onclick="resetAll()">
+      <i class="ti ti-refresh"></i> Reset
+    </button>
+
+  </div>
+</div>
+
+<script>
+  var goldRates = { 18: 0, 22: 0, 24: 0 };
+  var selectedKarat = 18;
+
+  function fmt(n) {
+    return '₹ ' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtShort(n) {
+    return '₹ ' + Math.round(n).toLocaleString('en-IN');
+  }
+  function fmtRate(n) {
+    if (!n) return '—';
+    return '₹ ' + Math.round(n).toLocaleString('en-IN');
+  }
+
+  function updateLiveCards() {
+    [18, 22, 24].forEach(function(k) {
+      document.getElementById('lprice-' + k).textContent = goldRates[k] ? fmtRate(goldRates[k]) : '—';
+      document.getElementById('lcard-' + k).classList.toggle('active', k === selectedKarat);
+    });
+  }
+
+  function updateRateDisplay() {
+    document.getElementById('rate-karat-label').textContent = selectedKarat + 'K rate';
+    document.getElementById('rate-display-val').textContent = goldRates[selectedKarat] ? fmtRate(goldRates[selectedKarat]) : '—';
+    [18, 22, 24].forEach(function(k) {
+      document.getElementById('btn-' + k).classList.toggle('active', k === selectedKarat);
+    });
+  }
+
+  function selectKarat(k) {
+    selectedKarat = k;
+    updateLiveCards();
+    updateRateDisplay();
+    calculate();
+  }
+
+  function calculate() {
+    var rate = goldRates[selectedKarat] || 0;
+    var wt = parseFloat(document.getElementById('goldWt').value) || 0;
+    var mkPct = parseFloat(document.getElementById('mkCharge').value) || 0;
+    var wastePct = parseFloat(document.getElementById('wasteCharge').value) || 0;
+    var taxPct = parseFloat(document.getElementById('taxCharge').value) || 0;
+
+    var goldAmt = rate * wt;
+    var mkAmt = goldAmt * mkPct / 100;
+    var wasteAmt = goldAmt * wastePct / 100;
+    var subtotal = goldAmt + mkAmt + wasteAmt;
+    var taxAmt = subtotal * taxPct / 100;
+    var total = subtotal + taxAmt;
+
+    document.getElementById('goldAmt').textContent = fmt(goldAmt);
+    document.getElementById('mkAmt').textContent = fmt(mkAmt);
+    document.getElementById('wasteAmt').textContent = fmt(wasteAmt);
+    document.getElementById('taxAmt').textContent = fmt(taxAmt);
+    document.getElementById('totalAmt').textContent = fmt(total);
+    document.getElementById('b-gold').textContent = fmtShort(goldAmt);
+    document.getElementById('b-mk').textContent = fmtShort(mkAmt);
+    document.getElementById('b-waste').textContent = fmtShort(wasteAmt);
+    document.getElementById('b-tax').textContent = fmtShort(taxAmt);
+  }
+
+  function resetAll() {
+    ['goldWt','mkCharge','wasteCharge','taxCharge'].forEach(function(id) {
+      document.getElementById(id).value = '';
+    });
+    calculate();
+  }
+
+  async function fetchLivePrices() {
+    var dot = document.getElementById('status-dot');
+    var statusText = document.getElementById('status-text');
+    dot.className = 'dot loading';
+    statusText.textContent = 'Fetching live prices...';
+    try {
+      var res = await fetch('https://api.metals.live/v1/spot/gold');
+      if (!res.ok) throw new Error('bad');
+      var data = await res.json();
+      var usdOz = parseFloat(data[0] && data[0].price ? data[0].price : data.price);
+      if (!usdOz) throw new Error('no price');
+      var inrPerGram24 = (usdOz / 31.1035) * 83.5;
+      goldRates[24] = inrPerGram24;
+      goldRates[22] = inrPerGram24 * (22 / 24);
+      goldRates[18] = inrPerGram24 * (18 / 24);
+      updateLiveCards();
+      updateRateDisplay();
+      calculate();
+      dot.className = 'dot';
+      var now = new Date();
+      statusText.textContent = 'Live prices · ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' (USD/INR ~₹83.5)';
+    } catch(e) {
+      try {
+        var r2 = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/xau.json');
+        var d2 = await r2.json();
+        var inrPerGram24 = d2.xau.inr / 31.1035;
+        goldRates[24] = inrPerGram24;
+        goldRates[22] = inrPerGram24 * (22 / 24);
+        goldRates[18] = inrPerGram24 * (18 / 24);
+        updateLiveCards();
+        updateRateDisplay();
+        calculate();
+        dot.className = 'dot';
+        var now = new Date();
+        statusText.textContent = 'Live prices · ' + now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      } catch(e2) {
+        goldRates[24] = 7200; goldRates[22] = 6600; goldRates[18] = 5400;
+        updateLiveCards();
+        updateRateDisplay();
+        calculate();
+        dot.className = 'dot error';
+        statusText.textContent = 'Live fetch failed — using estimated rates';
+      }
+    }
+  }
+
+  fetchLivePrices();
+  setInterval(fetchLivePrices, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>
