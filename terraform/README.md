@@ -21,9 +21,13 @@ terraform/
   variables.tf                    # Root variables passed into the module
   outputs.tf                      # Root outputs
   terraform.tfvars.example        # Example environment values
+  single-file/
+    playerhub-architecture.tf     # Standalone one-file Terraform script
   modules/
     playerhub_aws_stack/          # Reusable infrastructure module
 ```
+
+If you need one file only, use `single-file/playerhub-architecture.tf` as the standalone Terraform root.
 
 ## Usage
 
