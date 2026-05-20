@@ -1,0 +1,75 @@
+aws_region  = "us-west-1"
+name_prefix = "playerhub"
+environment = "dev"
+
+vpc_cidr = "10.40.0.0/16"
+
+# Leave empty to use the first two AZs in the selected region.
+availability_zones = []
+
+# Optional explicit subnet layout. If left empty, the module derives non-overlapping /24s.
+public_subnet_cidrs  = []
+private_subnet_cidrs = []
+data_subnet_cidrs    = []
+
+enable_nat_gateways  = true
+single_nat_gateway   = false
+enable_vpc_endpoints = true
+
+enable_eks         = true
+kubernetes_version = "1.30"
+eks_node_groups = {
+  application = {
+    instance_types = ["t3.medium"]
+    desired_size   = 2
+    min_size       = 1
+    max_size       = 4
+  }
+}
+
+app_repositories = ["api", "web", "worker"]
+
+s3_buckets = {
+  artifacts = {
+    versioning     = true
+    lifecycle_days = 365
+  }
+  logs = {
+    versioning     = true
+    lifecycle_days = 730
+  }
+}
+
+static_site = {
+  enabled             = true
+  create_bucket       = true
+  cloudfront_enabled  = true
+  aliases             = []
+  acm_certificate_arn = null
+  web_acl_id          = null
+  price_class         = "PriceClass_100"
+}
+
+enable_database             = true
+database_name               = "playerhub"
+database_username           = "playerhub_admin"
+database_instance_class     = "db.t4g.medium"
+database_read_replica_count = 1
+
+enable_cache     = true
+redis_node_type  = "cache.t4g.micro"
+redis_node_count = 2
+
+parameter_store_values = {
+  "/playerhub/dev/app/environment" = "dev"
+}
+
+secrets_manager_values = {}
+
+enable_regional_waf = true
+
+tags = {
+  Project     = "playerhub"
+  Environment = "dev"
+  ManagedBy   = "terraform"
+}
