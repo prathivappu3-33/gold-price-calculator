@@ -1151,6 +1151,10 @@ function setRatesFrom24(rate24, source) {
 }
 
 async function fetchRates(userRequested = false) {
+  if ($('manual-rate-toggle').checked && !userRequested) {
+    setLiveBadge('Manual rate');
+    return;
+  }
   try {
     const res = await fetch('https://api.goldapi.io/api/XAU/INR', {
       headers: { 'x-access-token': 'goldapi-demo' }
@@ -1219,7 +1223,10 @@ function setSelectedRateFromInput() {
   if (rate > 0) {
     liveRates[selectedKarat] = rate;
     rateSource = 'manual';
+    $('manual-rate-toggle').checked = true;
+    $('rate-editor').classList.add('active');
     saveManualRates(liveRates);
+    updateManualRateInputs();
     setLiveBadge('Manual rate');
     renderRates();
   }
@@ -1366,7 +1373,11 @@ function calculate() {
     quantity,
     totalWeight,
     goldValue,
+    makingType: $('making-type').value,
+    makingValue: numberValue('making-value'),
     makingAmount,
+    wastageType: $('wastage-type').value,
+    wastageValue: numberValue('wastage-value'),
     wastageAmount,
     stoneCharge,
     hallmarkCharge,
@@ -1374,6 +1385,7 @@ function calculate() {
     subtotal,
     taxPct: numberValue('tax-pct'),
     taxAmount,
+    roundingMode: $('rounding-mode').value,
     roundingAmount,
     total,
     notes: $('notes').value.trim(),
@@ -1514,10 +1526,15 @@ function loadEstimate(index) {
   $('gold-rate').value = estimate.rate.toFixed(2);
   $('gold-weight').value = estimate.weight;
   $('quantity').value = estimate.quantity;
+  $('making-type').value = estimate.makingType || CATEGORIES[categoryKey].makingType;
+  $('making-value').value = estimate.makingValue ?? CATEGORIES[categoryKey].making;
+  $('wastage-type').value = estimate.wastageType || CATEGORIES[categoryKey].wastageType;
+  $('wastage-value').value = estimate.wastageValue ?? CATEGORIES[categoryKey].wastage;
   $('stone-charge').value = estimate.stoneCharge;
   $('hallmark-charge').value = estimate.hallmarkCharge;
   $('discount').value = estimate.discount;
   $('tax-pct').value = estimate.taxPct;
+  $('rounding-mode').value = estimate.roundingMode || 'none';
   $('customer-name').value = estimate.customer || '';
   $('estimate-id').value = estimate.id;
   $('notes').value = estimate.notes || '';
