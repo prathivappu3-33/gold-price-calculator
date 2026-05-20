@@ -4,458 +4,1602 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Gold Price Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
   :root {
     --gold: #C9970C;
-    --gold-light: #F5E6B0;
-    --gold-dark: #8B6A00;
+    --gold-soft: #FFF4C6;
+    --gold-light: #F7E6AA;
+    --gold-dark: #7A5600;
+    --gold-deep: #4C3200;
     --gold-bg: #FFFBF0;
     --card-bg: #FFFFFF;
     --text: #1A1A1A;
-    --text-muted: #6B6B6B;
+    --text-muted: #68614D;
     --border: #E8DFC0;
     --input-bg: #FAFAF7;
-    --shadow: 0 2px 12px rgba(180,140,0,0.10);
-    --radius: 14px;
+    --success: #197A47;
+    --danger: #B54708;
+    --shadow: 0 10px 30px rgba(132, 91, 0, 0.10);
+    --radius: 18px;
   }
+
+  [data-theme="dark"] {
+    --gold-bg: #14100A;
+    --card-bg: #211A10;
+    --text: #FFF8DF;
+    --text-muted: #C6B88E;
+    --border: #4C3B15;
+    --input-bg: #17120B;
+    --gold-soft: #3A2A0A;
+    --gold-light: #5B4310;
+    --gold-dark: #F6D66E;
+    --gold-deep: #FFF4C6;
+    --shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: 'DM Sans', sans-serif;
-    background: var(--gold-bg);
+    background:
+      radial-gradient(circle at top left, rgba(255, 232, 143, 0.34), transparent 32rem),
+      var(--gold-bg);
     color: var(--text);
     min-height: 100vh;
   }
 
-  /* ── HEADER ── */
+  button, input, select, textarea { font: inherit; }
+  button { cursor: pointer; }
+  a { color: inherit; }
+
+  .app-shell {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+    padding-bottom: 42px;
+  }
+
   .header {
-    background: linear-gradient(135deg, #7B5500 0%, #C9970C 60%, #E8C050 100%);
-    padding: 22px 24px 18px;
-    text-align: center;
+    background: linear-gradient(135deg, #704600 0%, #C9970C 54%, #F2CB61 100%);
+    border-radius: 0 0 30px 30px;
+    box-shadow: 0 16px 35px rgba(117, 78, 0, 0.18);
+    color: #FFF8E1;
+    overflow: hidden;
     position: relative;
   }
-  .header h1 {
+
+  .header::after {
+    content: "";
+    position: absolute;
+    inset: auto -6rem -9rem auto;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.13);
+  }
+
+  .header-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 22px;
+    padding: 22px 20px 24px;
+  }
+
+  .topbar {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+  }
+
+  .brand {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+  }
+
+  .brand-mark {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    display: grid;
+    height: 48px;
+    justify-content: center;
+    width: 48px;
+  }
+
+  .brand-mark svg {
+    fill: #FFE57A;
+    height: 28px;
+    width: 28px;
+  }
+
+  .brand h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 1.55rem;
-    color: #FFF8E1;
-    letter-spacing: 0.5px;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: clamp(1.45rem, 4vw, 2.35rem);
+    line-height: 1.04;
   }
-  .header h1 svg { width: 26px; height: 26px; fill: #FFE57A; }
 
-  /* ── LIVE RATES ── */
-  .rates-bar {
-    display: flex; gap: 10px; justify-content: center;
-    padding: 14px 16px 10px;
+  .brand p {
+    color: #FFF3BF;
+    font-size: 0.9rem;
+    margin-top: 3px;
+  }
+
+  .header-actions {
+    display: flex;
     flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
   }
-  .rate-card {
-    background: var(--card-bg);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 18px;
-    text-align: center;
-    min-width: 110px;
-    box-shadow: var(--shadow);
-    transition: border-color 0.2s;
-  }
-  .rate-card.active { border-color: var(--gold); background: #FFFBEC; }
-  .rate-card .karat { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-  .rate-card .price { font-size: 1.12rem; font-weight: 600; color: var(--gold-dark); margin-top: 2px; }
-  .rate-card .unit { font-size: 11px; color: var(--text-muted); }
 
-  .live-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: #EAFAF1; border: 1px solid #A9DFBF;
-    color: #1E8449; font-size: 11px; font-weight: 600;
-    border-radius: 20px; padding: 3px 12px;
-    margin: 0 auto 14px; display: flex; width: fit-content; margin: 0 auto 10px;
+  .pill-btn, .icon-btn {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: #FFF8E1;
+    display: inline-flex;
+    gap: 7px;
+    min-height: 38px;
+    padding: 8px 13px;
   }
-  .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #27AE60; animation: blink 1.2s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* ── CATEGORY SECTION (index page) ── */
-  .section-title {
-    font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--gold-dark); padding: 0 16px 8px;
+  .pill-btn:hover, .icon-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
   }
-  .categories-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
-    padding: 0 16px 80px;
+
+  .hero-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1.1fr 0.9fr;
   }
-  .cat-card {
+
+  .hero-copy {
+    align-self: end;
+  }
+
+  .hero-copy h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.55rem, 5vw, 3.2rem);
+    line-height: 1.02;
+    max-width: 720px;
+  }
+
+  .hero-copy p {
+    color: #FFF3BF;
+    line-height: 1.6;
+    margin-top: 10px;
+    max-width: 640px;
+  }
+
+  .quick-total {
+    align-self: end;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 24px;
+    padding: 18px;
+  }
+
+  .quick-total span {
+    color: #FFF3BF;
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .quick-total strong {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.1rem);
+    line-height: 1;
+    margin-top: 8px;
+  }
+
+  .quick-total small {
+    color: #FFF3BF;
+    display: block;
+    margin-top: 7px;
+  }
+
+  .page {
+    display: none;
+    padding: 18px 18px 0;
+  }
+
+  .page.active { display: block; }
+
+  .status-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .live-badge, .source-badge {
+    align-items: center;
+    background: #EAFAF1;
+    border: 1px solid #A9DFBF;
+    border-radius: 999px;
+    color: var(--success);
+    display: inline-flex;
+    font-size: 0.78rem;
+    font-weight: 700;
+    gap: 7px;
+    padding: 6px 12px;
+  }
+
+  .source-badge.manual {
+    background: #FFF4E5;
+    border-color: #FED7AA;
+    color: var(--danger);
+  }
+
+  .live-dot {
+    animation: blink 1.2s infinite;
+    background: #27AE60;
+    border-radius: 50%;
+    height: 8px;
+    width: 8px;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  .rates-bar {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 20px;
+  }
+
+  .rate-card, .form-card, .cat-card, .history-card, .rate-editor {
     background: var(--card-bg);
     border: 1.5px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px 14px 14px;
-    cursor: pointer;
-    transition: all 0.18s ease;
     box-shadow: var(--shadow);
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    text-align: center;
-    text-decoration: none; color: inherit;
   }
-  .cat-card:hover { border-color: var(--gold); background: #FFFBEC; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(180,140,0,0.15); }
-  .cat-icon { font-size: 2.2rem; line-height: 1; }
-  .cat-name { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 600; color: var(--text); }
-  .cat-sub { font-size: 11px; color: var(--text-muted); }
 
-  /* ── CALCULATOR PAGE ── */
-  .calc-page { display: none; padding: 0 0 60px; }
+  .rate-card {
+    padding: 15px;
+    position: relative;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .rate-card.active, .cat-card:hover {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+    transform: translateY(-2px);
+  }
+
+  .rate-card .karat {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .rate-card .price {
+    color: var(--gold-dark);
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.35rem, 4vw, 2rem);
+    font-weight: 700;
+    margin-top: 4px;
+  }
+
+  .rate-card .unit {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+  }
+
+  .rate-card button {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    inset: 0;
+    position: absolute;
+    width: 100%;
+  }
+
+  .section-head {
+    align-items: end;
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    margin: 14px 0 12px;
+  }
+
+  .eyebrow {
+    color: var(--gold-dark);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .section-head h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.45rem, 4vw, 2rem);
+    margin-top: 2px;
+  }
+
+  .section-head p {
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-top: 4px;
+    max-width: 640px;
+  }
+
+  .category-search {
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    min-width: min(280px, 100%);
+    outline: none;
+    padding: 11px 15px;
+  }
+
+  .category-search:focus { border-color: var(--gold); }
+
+  .categories-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cat-card {
+    color: inherit;
+    display: grid;
+    gap: 8px;
+    min-height: 152px;
+    padding: 18px;
+    text-align: left;
+    text-decoration: none;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  }
+
+  .cat-icon { font-size: 2.35rem; line-height: 1; }
+
+  .cat-name {
+    color: var(--text);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.16rem;
+    font-weight: 700;
+  }
+
+  .cat-sub, .cat-meta {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .cat-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cat-meta span {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 8px;
+  }
+
   .back-btn {
-    display: flex; align-items: center; gap: 6px;
-    background: none; border: none; cursor: pointer;
-    font-family: 'DM Sans', sans-serif; font-size: 13px;
-    color: var(--gold-dark); font-weight: 600;
-    padding: 14px 16px 6px;
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--gold-dark);
+    display: inline-flex;
+    font-weight: 800;
+    gap: 7px;
+    margin-bottom: 10px;
+    padding: 6px 0;
   }
-  .back-btn svg { width: 18px; height: 18px; stroke: var(--gold-dark); }
 
-  .cat-hero {
-    text-align: center; padding: 10px 16px 16px;
+  .back-btn svg {
+    height: 18px;
+    stroke: currentColor;
+    width: 18px;
   }
-  .cat-hero .big-icon { font-size: 3rem; line-height: 1; }
-  .cat-hero h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--gold-dark); margin-top: 6px; }
+
+  .calc-layout {
+    align-items: start;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  }
+
+  .calc-title-row {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+
+  .big-icon {
+    align-items: center;
+    background: var(--gold-soft);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    display: grid;
+    font-size: 2.2rem;
+    height: 68px;
+    justify-content: center;
+    width: 68px;
+  }
+
+  .calc-title-row h2 {
+    color: var(--gold-dark);
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 4vw, 2.35rem);
+  }
+
+  .calc-title-row p {
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
 
   .form-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin: 0 16px 12px;
-    padding: 16px;
-    box-shadow: var(--shadow);
-  }
-  .form-card .card-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--gold); background: var(--gold-light); border-radius: 5px;
-    padding: 2px 8px; display: inline-block; margin-bottom: 12px;
+    margin-bottom: 14px;
+    padding: 18px;
   }
 
-  .karat-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+  .card-label {
+    align-items: center;
+    color: var(--gold-dark);
+    display: flex;
+    font-size: 0.76rem;
+    font-weight: 900;
+    gap: 8px;
+    letter-spacing: 0.13em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .card-label::before {
+    background: var(--gold);
+    border-radius: 999px;
+    content: "";
+    display: inline-block;
+    height: 9px;
+    width: 9px;
+  }
+
+  .karat-btns {
+    display: grid;
+    gap: 9px;
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 14px;
+  }
+
   .karat-btn {
-    flex: 1; padding: 9px 0; border: 1.5px solid var(--border);
-    background: var(--input-bg); border-radius: 8px; font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; color: var(--text);
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-weight: 800;
+    padding: 11px 8px;
+    transition: all 0.15s ease;
   }
-  .karat-btn.active { background: var(--gold); color: #fff; border-color: var(--gold); }
 
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .field { display: flex; flex-direction: column; gap: 4px; }
-  .field label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
-  .field input {
-    background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px;
-    padding: 9px 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
-    outline: none; transition: border-color 0.15s; width: 100%;
+  .karat-btn.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #FFFFFF;
   }
-  .field input:focus { border-color: var(--gold); }
-  .field input[readonly] { color: var(--text-muted); background: #F5F3ED; }
-  .field .hint { font-size: 11px; color: var(--text-muted); }
 
-  .gold-amount-row {
-    background: var(--gold-light); border-radius: 8px; padding: 10px 12px;
-    display: flex; justify-content: space-between; align-items: center; margin-top: 8px;
+  .field-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .gold-amount-row .lbl { font-size: 12px; color: var(--gold-dark); font-weight: 500; }
-  .gold-amount-row .val { font-size: 16px; font-weight: 700; color: var(--gold-dark); font-family: 'Playfair Display', serif; }
 
-  .breakdown-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
-  .breakdown-item {
-    background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
-  }
-  .breakdown-item .b-lbl { font-size: 11px; color: var(--text-muted); }
-  .breakdown-item .b-val { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 2px; }
 
-  .total-bar {
-    background: linear-gradient(90deg, #7B5500, #C9970C);
-    border-radius: var(--radius); margin: 0 16px;
-    padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 4px 16px rgba(180,140,0,0.25);
+  .field.full { grid-column: 1 / -1; }
+
+  .field label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
   }
-  .total-bar .t-lbl { font-size: 14px; color: #FFE57A; font-weight: 500; }
-  .total-bar .t-val { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #FFF8E1; font-weight: 600; }
+
+  .field input, .field select, .field textarea {
+    background: var(--input-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    outline: none;
+    padding: 11px 12px;
+    width: 100%;
+  }
+
+  .field textarea {
+    min-height: 76px;
+    resize: vertical;
+  }
+
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--gold);
+  }
+
+  .field input[readonly] {
+    color: var(--text-muted);
+  }
+
+  .hint {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+  }
+
+  .toggle-line {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 4px 0 14px;
+  }
+
+  .toggle-line label {
+    align-items: center;
+    color: var(--text-muted);
+    display: inline-flex;
+    font-size: 0.86rem;
+    font-weight: 700;
+    gap: 7px;
+  }
+
+  .rate-editor {
+    display: none;
+    margin-bottom: 14px;
+    padding: 14px;
+  }
+
+  .rate-editor.active { display: block; }
+
+  .summary-card {
+    background: linear-gradient(160deg, #6D4500, #C9970C);
+    border-radius: 24px;
+    box-shadow: 0 20px 42px rgba(142, 91, 0, 0.28);
+    color: #FFF8E1;
+    overflow: hidden;
+    position: sticky;
+    top: 14px;
+  }
+
+  .summary-card-inner {
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .summary-card::after {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+    content: "";
+    height: 260px;
+    position: absolute;
+    right: -105px;
+    top: -92px;
+    width: 260px;
+  }
+
+  .summary-label {
+    color: #FFE9A3;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .summary-total {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 7vw, 4rem);
+    font-weight: 700;
+    line-height: 1;
+    margin: 10px 0 6px;
+  }
+
+  .summary-sub {
+    color: #FFF0BD;
+    line-height: 1.5;
+  }
+
+  .mini-stats {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 18px;
+  }
+
+  .mini-stat {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 15px;
+    padding: 11px;
+  }
+
+  .mini-stat span {
+    color: #FFE9A3;
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .mini-stat strong {
+    display: block;
+    font-size: 1rem;
+    margin-top: 3px;
+  }
+
+  .actions-grid {
+    display: grid;
+    gap: 9px;
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 16px;
+  }
+
+  .action-btn, .reset-btn {
+    align-items: center;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    display: inline-flex;
+    font-weight: 800;
+    gap: 7px;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .action-btn {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #FFF8E1;
+  }
+
+  .action-btn.primary {
+    background: #FFF8E1;
+    color: #7A5600;
+  }
 
   .reset-btn {
-    display: block; width: calc(100% - 32px); margin: 12px 16px 0;
-    padding: 12px; background: none; border: 1.5px solid var(--border);
-    border-radius: var(--radius); font-family: 'DM Sans', sans-serif;
-    font-size: 14px; color: var(--text-muted); cursor: pointer; transition: all 0.15s;
+    background: var(--card-bg);
+    color: var(--gold-dark);
+    width: 100%;
   }
-  .reset-btn:hover { border-color: var(--gold); color: var(--gold-dark); }
 
-  .page { display: none; }
-  .page.active { display: block; }
+  .breakdown-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .breakdown-row {
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    display: flex;
+    justify-content: space-between;
+    padding: 11px 12px;
+  }
+
+  .breakdown-row span {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+  }
+
+  .breakdown-row strong {
+    color: var(--text);
+  }
+
+  .breakdown-row.total {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+  }
+
+  .history-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .history-card {
+    padding: 14px;
+  }
+
+  .history-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.08rem;
+  }
+
+  .history-card p {
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin-top: 5px;
+  }
+
+  .history-card strong {
+    color: var(--gold-dark);
+    display: block;
+    font-size: 1.32rem;
+    margin-top: 10px;
+  }
+
+  .history-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .small-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 7px 10px;
+  }
+
+  .empty-state {
+    background: var(--card-bg);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    grid-column: 1 / -1;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .toast {
+    background: var(--gold-deep);
+    border-radius: 999px;
+    bottom: 20px;
+    box-shadow: var(--shadow);
+    color: var(--gold-bg);
+    left: 50%;
+    opacity: 0;
+    padding: 12px 18px;
+    pointer-events: none;
+    position: fixed;
+    transform: translate(-50%, 22px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid, .calc-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .summary-card {
+      position: static;
+    }
+
+    .categories-grid, .history-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 640px) {
+    .header-inner, .page {
+      padding-left: 14px;
+      padding-right: 14px;
+    }
+
+    .topbar, .section-head {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .header-actions, .status-row {
+      justify-content: flex-start;
+    }
+
+    .rates-bar, .categories-grid, .history-grid, .field-grid, .karat-btns, .mini-stats, .actions-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cat-card {
+      min-height: 0;
+    }
+  }
+
+  @media print {
+    body {
+      background: #FFFFFF;
+      color: #111111;
+    }
+
+    .header, .page-index, .back-btn, .form-card, .actions-grid, .reset-btn, .status-row, .rates-bar, .history-section {
+      display: none !important;
+    }
+
+    .page, .page.active, .summary-card {
+      display: block !important;
+      padding: 0;
+    }
+
+    .calc-layout {
+      display: block;
+    }
+
+    .summary-card {
+      background: #FFFFFF;
+      box-shadow: none;
+      color: #111111;
+    }
+
+    .summary-card-inner {
+      padding: 0;
+    }
+
+    .summary-label, .summary-sub, .mini-stat span {
+      color: #555555;
+    }
+
+    .summary-total, .mini-stat strong {
+      color: #111111;
+    }
+  }
 </style>
 </head>
 <body>
+<div class="app-shell">
+  <header class="header">
+    <div class="header-inner">
+      <div class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2 2 8l2.2 12h15.6L22 8 12 2Zm0 2.3 6.7 4-1.5 8.4H6.8L5.3 8.3 12 4.3Z"/></svg>
+          </div>
+          <div>
+            <h1>Gold Price Calculator</h1>
+            <p>Live rates, jewellery charges, GST, invoice and saved estimates.</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="pill-btn" type="button" onclick="fetchRates(true)">Refresh Rates</button>
+          <button class="icon-btn" type="button" onclick="toggleTheme()" id="theme-btn">Dark Mode</button>
+        </div>
+      </div>
 
-<!-- HEADER (shared) -->
-<div class="header">
-  <h1>
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 8l2 12h16L22 8z"/></svg>
-    Gold Price Calculator
-  </h1>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h2>Estimate jewellery price before you buy or sell.</h2>
+          <p>Select a category, choose purity, adjust making and wastage charges, then save or share a complete estimate.</p>
+        </div>
+        <div class="quick-total">
+          <span>Current estimate</span>
+          <strong id="hero-total">₹ 0.00</strong>
+          <small id="hero-caption">Pick a category to start calculating.</small>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="page page-index active" id="page-index">
+      <div class="status-row">
+        <div class="live-badge"><span class="live-dot"></span><span id="live-time">Fetching live prices...</span></div>
+        <div class="source-badge" id="source-badge">Auto rates</div>
+      </div>
+
+      <div class="rates-bar" id="rates-bar" aria-label="Gold rates"></div>
+
+      <div class="rate-editor" id="rate-editor">
+        <div class="card-label">Manual rate editor</div>
+        <div class="field-grid">
+          <div class="field">
+            <label for="manual-rate-24">24K rate / gram</label>
+            <input id="manual-rate-24" type="number" min="0" step="0.01" oninput="applyManualRates()"/>
+          </div>
+          <div class="field">
+            <label for="manual-rate-22">22K rate / gram</label>
+            <input id="manual-rate-22" type="number" min="0" step="0.01" oninput="applyManualRates()"/>
+          </div>
+          <div class="field">
+            <label for="manual-rate-18">18K rate / gram</label>
+            <input id="manual-rate-18" type="number" min="0" step="0.01" oninput="applyManualRates()"/>
+          </div>
+          <div class="field">
+            <label for="manual-rate-14">14K rate / gram</label>
+            <input id="manual-rate-14" type="number" min="0" step="0.01" oninput="applyManualRates()"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Browse by category</div>
+          <h2>Jewellery presets</h2>
+          <p>Each preset mirrors common shop calculations with default making charge, wastage, GST, and purity.</p>
+        </div>
+        <input class="category-search" id="category-search" type="search" placeholder="Search categories..." oninput="renderCategories()"/>
+      </div>
+      <div class="categories-grid" id="categories-grid"></div>
+
+      <section class="history-section">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Saved estimates</div>
+            <h2>Recent calculations</h2>
+            <p>Store estimates locally on this device and reload them later.</p>
+          </div>
+          <button class="small-btn" type="button" onclick="clearHistory()">Clear history</button>
+        </div>
+        <div class="history-grid" id="history-grid"></div>
+      </section>
+    </section>
+
+    <section class="page" id="page-calc">
+      <button class="back-btn" type="button" onclick="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        All categories
+      </button>
+
+      <div class="calc-layout">
+        <div>
+          <div class="calc-title-row">
+            <div class="big-icon" id="calc-icon">💍</div>
+            <div>
+              <h2 id="calc-title">Rings</h2>
+              <p id="calc-subtitle">Making 4% · Wastage 1% · GST 3%</p>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="card-label">Base details</div>
+            <div class="karat-btns" id="karat-buttons"></div>
+            <div class="toggle-line">
+              <label><input id="manual-rate-toggle" type="checkbox" onchange="toggleManualRates()"/> Use manual rates</label>
+              <span class="hint" id="karat-hint">24K rate selected</span>
+            </div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="gold-rate">Gold rate / gram</label>
+                <input id="gold-rate" type="number" min="0" step="0.01" oninput="setSelectedRateFromInput()"/>
+              </div>
+              <div class="field">
+                <label for="gold-weight">Gold weight (grams)</label>
+                <input id="gold-weight" type="number" placeholder="0" min="0" step="0.001" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="quantity">Quantity</label>
+                <input id="quantity" type="number" min="1" step="1" value="1" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="discount">Discount (₹)</label>
+                <input id="discount" type="number" min="0" step="0.01" value="0" oninput="calculate()"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="card-label">Charges</div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="making-type">Making charge type</label>
+                <select id="making-type" onchange="calculate()">
+                  <option value="percent">% of gold value</option>
+                  <option value="perGram">₹ per gram</option>
+                  <option value="flat">Flat ₹ amount</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="making-value">Making charge value</label>
+                <input id="making-value" type="number" min="0" step="0.01" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="wastage-type">Wastage type</label>
+                <select id="wastage-type" onchange="calculate()">
+                  <option value="percent">% of gold value</option>
+                  <option value="grams">Extra grams</option>
+                  <option value="flat">Flat ₹ amount</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="wastage-value">Wastage value</label>
+                <input id="wastage-value" type="number" min="0" step="0.01" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="stone-charge">Stone / diamond charge</label>
+                <input id="stone-charge" type="number" min="0" step="0.01" value="0" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="hallmark-charge">Hallmark / other charge</label>
+                <input id="hallmark-charge" type="number" min="0" step="0.01" value="0" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="tax-pct">GST / tax %</label>
+                <input id="tax-pct" type="number" min="0" step="0.01" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="rounding-mode">Rounding</label>
+                <select id="rounding-mode" onchange="calculate()">
+                  <option value="none">No rounding</option>
+                  <option value="nearest">Nearest rupee</option>
+                  <option value="up">Round up</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="card-label">Customer / invoice</div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="customer-name">Customer name</label>
+                <input id="customer-name" type="text" placeholder="Optional" oninput="calculate()"/>
+              </div>
+              <div class="field">
+                <label for="estimate-id">Estimate no.</label>
+                <input id="estimate-id" type="text" oninput="calculate()"/>
+              </div>
+              <div class="field full">
+                <label for="notes">Notes</label>
+                <textarea id="notes" placeholder="Stone details, shop terms, buy/sell notes..." oninput="calculate()"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="summary-card">
+            <div class="summary-card-inner" id="invoice">
+              <span class="summary-label">Total amount</span>
+              <strong class="summary-total" id="total-amt">₹ 0.00</strong>
+              <p class="summary-sub" id="summary-sub">Gold value, making charge, wastage and GST included.</p>
+
+              <div class="mini-stats">
+                <div class="mini-stat"><span>Gold amount</span><strong id="gold-amt">₹ 0.00</strong></div>
+                <div class="mini-stat"><span>Rate used</span><strong id="rate-used">₹ 0/g</strong></div>
+                <div class="mini-stat"><span>Total weight</span><strong id="weight-used">0 g</strong></div>
+                <div class="mini-stat"><span>Tax amount</span><strong id="tax-amt">₹ 0.00</strong></div>
+              </div>
+
+              <div class="breakdown-list" id="breakdown-list" style="margin-top: 16px;"></div>
+            </div>
+
+            <div class="summary-card-inner">
+              <div class="actions-grid">
+                <button class="action-btn primary" type="button" onclick="saveEstimate()">Save</button>
+                <button class="action-btn" type="button" onclick="shareEstimate()">Share</button>
+                <button class="action-btn" type="button" onclick="copyEstimate()">Copy</button>
+                <button class="action-btn" type="button" onclick="window.print()">Print</button>
+                <button class="action-btn" type="button" onclick="downloadCSV()">Export CSV</button>
+                <button class="action-btn" type="button" onclick="resetCalc()">Reset</button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
 </div>
 
-<!-- ═══ PAGE: INDEX ═══ -->
-<div class="page active" id="page-index">
-
-  <!-- Live rates -->
-  <div style="padding: 14px 16px 4px;">
-    <div class="live-badge"><span class="live-dot"></span> <span id="live-time">Fetching live prices...</span></div>
-  </div>
-  <div class="rates-bar">
-    <div class="rate-card" id="rate-18"><div class="karat">18K Gold</div><div class="price" id="r18">Loading...</div><div class="unit">per gram</div></div>
-    <div class="rate-card" id="rate-22"><div class="karat">22K Gold</div><div class="price" id="r22">Loading...</div><div class="unit">per gram</div></div>
-    <div class="rate-card" id="rate-24"><div class="karat">24K Gold</div><div class="price" id="r24">Loading...</div><div class="unit">per gram</div></div>
-  </div>
-
-  <!-- Categories -->
-  <div style="padding: 6px 0 0;">
-    <div class="section-title" style="padding: 0 16px 10px;">Browse by Category</div>
-    <div class="categories-grid">
-      <a class="cat-card" onclick="openCategory('rings')">
-        <div class="cat-icon">💍</div>
-        <div class="cat-name">Rings</div>
-        <div class="cat-sub">Making 4% · Wastage 1%</div>
-      </a>
-      <a class="cat-card" onclick="openCategory('chains')">
-        <div class="cat-icon">⛓️</div>
-        <div class="cat-name">Chains</div>
-        <div class="cat-sub">Making 7% · Wastage 3%</div>
-      </a>
-      <a class="cat-card" onclick="openCategory('bracelets')">
-        <div class="cat-icon">📿</div>
-        <div class="cat-name">Bracelets</div>
-        <div class="cat-sub">Making 3% · Wastage 1%</div>
-      </a>
-      <a class="cat-card" onclick="openCategory('earrings')">
-        <div class="cat-icon">✨</div>
-        <div class="cat-name">Earrings</div>
-        <div class="cat-sub">Making 2% · Wastage 1%</div>
-      </a>
-      <a class="cat-card" onclick="openCategory('necklaces')">
-        <div class="cat-icon">🪬</div>
-        <div class="cat-name">Necklaces</div>
-        <div class="cat-sub">Making 6% · Wastage 2%</div>
-      </a>
-      <a class="cat-card" onclick="openCategory('bangles')">
-        <div class="cat-icon">🟡</div>
-        <div class="cat-name">Bangles</div>
-        <div class="cat-sub">Making 6% · Wastage 2%</div>
-      </a>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ PAGE: CALCULATOR ═══ -->
-<div class="page" id="page-calc">
-  <button class="back-btn" onclick="goBack()">
-    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-    All Categories
-  </button>
-
-  <div class="cat-hero">
-    <div class="big-icon" id="calc-icon">💍</div>
-    <h2 id="calc-title">Rings</h2>
-  </div>
-
-  <!-- Base details -->
-  <div class="form-card">
-    <div class="card-label">Base Details</div>
-    <div class="karat-btns">
-      <button class="karat-btn" onclick="selectKarat(18)" id="kb18">18K</button>
-      <button class="karat-btn" onclick="selectKarat(22)" id="kb22">22K</button>
-      <button class="karat-btn active" onclick="selectKarat(24)" id="kb24">24K</button>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Gold rate (per gram)</label>
-        <input type="text" id="gold-rate" readonly placeholder="Loading..."/>
-        <span class="hint" id="karat-hint">24K rate</span>
-      </div>
-      <div class="field">
-        <label>Gold weight (grams)</label>
-        <input type="number" id="gold-weight" placeholder="0" min="0" step="0.01" oninput="calculate()"/>
-      </div>
-    </div>
-    <div class="gold-amount-row">
-      <span class="lbl">Gold amount</span>
-      <span class="val" id="gold-amt">₹ 0.00</span>
-    </div>
-  </div>
-
-  <!-- Charges -->
-  <div class="form-card">
-    <div class="card-label">Charges</div>
-    <div class="field-row">
-      <div class="field">
-        <label>Making charge %</label>
-        <input type="number" id="making-pct" min="0" step="0.1" oninput="calculate()"/>
-      </div>
-      <div class="field">
-        <label>Making charge amt</label>
-        <input type="text" id="making-amt" readonly/>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Wastage %</label>
-        <input type="number" id="wastage-pct" min="0" step="0.1" oninput="calculate()"/>
-      </div>
-      <div class="field">
-        <label>Wastage amt</label>
-        <input type="text" id="wastage-amt" readonly/>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Tax (GST) %</label>
-        <input type="number" id="tax-pct" min="0" step="0.1" oninput="calculate()"/>
-      </div>
-      <div class="field">
-        <label>Tax amt</label>
-        <input type="text" id="tax-amt" readonly/>
-      </div>
-    </div>
-  </div>
-
-  <!-- Breakdown -->
-  <div class="form-card">
-    <div class="card-label">Breakdown</div>
-    <div class="breakdown-grid">
-      <div class="breakdown-item"><div class="b-lbl">Gold value</div><div class="b-val" id="b-gold">₹ 0</div></div>
-      <div class="breakdown-item"><div class="b-lbl">Making charges</div><div class="b-val" id="b-making">₹ 0</div></div>
-      <div class="breakdown-item"><div class="b-lbl">Wastage</div><div class="b-val" id="b-wastage">₹ 0</div></div>
-      <div class="breakdown-item"><div class="b-lbl">Tax (GST)</div><div class="b-val" id="b-tax">₹ 0</div></div>
-    </div>
-  </div>
-
-  <div class="total-bar">
-    <span class="t-lbl">Total amount</span>
-    <span class="t-val" id="total-amt">₹ 0.00</span>
-  </div>
-
-  <button class="reset-btn" onclick="resetCalc()">↺ Reset</button>
-</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const CATEGORIES = {
-  rings:     { name: 'Rings',     icon: '💍', making: 4,  wastage: 1, tax: 18 },
-  chains:    { name: 'Chains',    icon: '⛓️', making: 7,  wastage: 3, tax: 18 },
-  bracelets: { name: 'Bracelets', icon: '📿', making: 3,  wastage: 1, tax: 18 },
-  earrings:  { name: 'Earrings',  icon: '✨', making: 2,  wastage: 1, tax: 18 },
-  necklaces: { name: 'Necklaces', icon: '🪬', making: 6,  wastage: 2, tax: 18 },
-  bangles:   { name: 'Bangles',   icon: '🟡', making: 6,  wastage: 2, tax: 18 },
+const STORAGE_KEYS = {
+  history: 'goldCalculatorHistory',
+  theme: 'goldCalculatorTheme',
+  manualRates: 'goldCalculatorManualRates'
 };
 
-let liveRates = { 18: null, 22: null, 24: null };
-let selectedKarat = 24;
+const KARATS = [24, 22, 18, 14];
 
-async function fetchRates() {
+const FALLBACK_24K_RATE = 14031;
+
+const CATEGORIES = {
+  rings: { name: 'Rings', icon: '💍', making: 4, makingType: 'percent', wastage: 1, wastageType: 'percent', tax: 3, karat: 22, note: 'Daily-wear rings and bands' },
+  chains: { name: 'Chains', icon: '⛓️', making: 7, makingType: 'percent', wastage: 3, wastageType: 'percent', tax: 3, karat: 22, note: 'Light to heavy chain designs' },
+  bracelets: { name: 'Bracelets', icon: '📿', making: 3, makingType: 'percent', wastage: 1, wastageType: 'percent', tax: 3, karat: 22, note: 'Bracelets and kadas' },
+  earrings: { name: 'Earrings', icon: '✨', making: 2, makingType: 'percent', wastage: 1, wastageType: 'percent', tax: 3, karat: 22, note: 'Studs, drops and hoops' },
+  necklaces: { name: 'Necklaces', icon: '🪬', making: 6, makingType: 'percent', wastage: 2, wastageType: 'percent', tax: 3, karat: 22, note: 'Necklace sets and chokers' },
+  bangles: { name: 'Bangles', icon: '🟡', making: 6, makingType: 'percent', wastage: 2, wastageType: 'percent', tax: 3, karat: 22, note: 'Plain and designer bangles' },
+  coins: { name: 'Coins', icon: '🪙', making: 0, makingType: 'percent', wastage: 0, wastageType: 'percent', tax: 3, karat: 24, note: 'Coins, bars and bullion' },
+  pendants: { name: 'Pendants', icon: '🔱', making: 5, makingType: 'percent', wastage: 1.5, wastageType: 'percent', tax: 3, karat: 22, note: 'Pendants and lockets' },
+  anklets: { name: 'Anklets', icon: '🦶', making: 4, makingType: 'percent', wastage: 1, wastageType: 'percent', tax: 3, karat: 18, note: 'Gold anklets and payals' },
+  custom: { name: 'Custom Item', icon: '⚖️', making: 0, makingType: 'percent', wastage: 0, wastageType: 'percent', tax: 3, karat: 24, note: 'Start from a blank estimate' }
+};
+
+let liveRates = {};
+let selectedKarat = 24;
+let currentCategoryKey = 'rings';
+let lastEstimate = null;
+let rateSource = 'auto';
+
+const $ = id => document.getElementById(id);
+const numberValue = id => Math.max(0, parseFloat($(id).value) || 0);
+const formatMoney = value => '₹ ' + Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatMoneyShort = value => '₹ ' + Math.round(value || 0).toLocaleString('en-IN');
+
+function deriveRates(rate24) {
+  return KARATS.reduce((rates, karat) => {
+    rates[karat] = rate24 * (karat / 24);
+    return rates;
+  }, {});
+}
+
+function setRatesFrom24(rate24, source) {
+  liveRates = deriveRates(rate24);
+  rateSource = source;
+  updateManualRateInputs();
+  renderRates();
+  updateRateDisplay();
+}
+
+async function fetchRates(userRequested = false) {
   try {
     const res = await fetch('https://api.goldapi.io/api/XAU/INR', {
       headers: { 'x-access-token': 'goldapi-demo' }
     });
+    if (!res.ok) throw new Error('Rate API unavailable');
     const data = await res.json();
-    const per_gram_24k = data.price_gram_24k || data.price / 31.1035;
-    liveRates[24] = per_gram_24k;
-    liveRates[22] = per_gram_24k * (22/24);
-    liveRates[18] = per_gram_24k * (18/24);
+    const perGram24K = Number(data.price_gram_24k || data.price / 31.1035);
+    if (!Number.isFinite(perGram24K) || perGram24K <= 0) throw new Error('Invalid rate payload');
+    setRatesFrom24(perGram24K, 'live');
+    setLiveBadge('Live prices');
+    if (userRequested) showToast('Rates refreshed');
   } catch {
-    // fallback approximate rates
-    liveRates[24] = 14031;
-    liveRates[22] = 12862;
-    liveRates[18] = 10523;
+    const savedRates = loadManualRates();
+    liveRates = Object.keys(savedRates).length ? savedRates : deriveRates(FALLBACK_24K_RATE);
+    rateSource = Object.keys(savedRates).length ? 'manual' : 'fallback';
+    updateManualRateInputs();
+    renderRates();
+    updateRateDisplay();
+    setLiveBadge(rateSource === 'manual' ? 'Manual saved rates' : 'Fallback market estimate');
+    if (userRequested) showToast('Using fallback rates');
   }
-  const fmt = v => '₹ ' + Math.round(v).toLocaleString('en-IN');
-  document.getElementById('r18').textContent = fmt(liveRates[18]);
-  document.getElementById('r22').textContent = fmt(liveRates[22]);
-  document.getElementById('r24').textContent = fmt(liveRates[24]);
+}
 
-  const now = new Date();
-  const t = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-  document.getElementById('live-time').textContent = 'Live prices · ' + t;
+function setLiveBadge(label) {
+  const t = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  $('live-time').textContent = `${label} · ${t}`;
+  $('source-badge').textContent = rateSource === 'live' ? 'Auto rates' : rateSource === 'manual' ? 'Manual rates' : 'Fallback rates';
+  $('source-badge').classList.toggle('manual', rateSource !== 'live');
+}
 
+function renderRates() {
+  $('rates-bar').innerHTML = KARATS.map(karat => `
+    <article class="rate-card ${selectedKarat === karat ? 'active' : ''}" id="rate-${karat}">
+      <div class="karat">${karat}K Gold</div>
+      <div class="price" id="r${karat}">${formatMoneyShort(liveRates[karat])}</div>
+      <div class="unit">per gram</div>
+      <button type="button" aria-label="Select ${karat} karat gold" onclick="selectKarat(${karat})"></button>
+    </article>
+  `).join('');
+}
+
+function renderKaratButtons() {
+  $('karat-buttons').innerHTML = KARATS.map(karat => `
+    <button class="karat-btn ${selectedKarat === karat ? 'active' : ''}" type="button" onclick="selectKarat(${karat})" id="kb${karat}">
+      ${karat}K
+    </button>
+  `).join('');
+}
+
+function selectKarat(karat) {
+  selectedKarat = karat;
+  renderRates();
+  renderKaratButtons();
   updateRateDisplay();
 }
 
 function updateRateDisplay() {
-  const rate = liveRates[selectedKarat];
-  if (rate) {
-    document.getElementById('gold-rate').value = '₹ ' + Math.round(rate).toLocaleString('en-IN');
-    document.getElementById('karat-hint').textContent = selectedKarat + 'K rate';
+  const rate = liveRates[selectedKarat] || 0;
+  $('gold-rate').value = rate ? rate.toFixed(2) : '';
+  $('karat-hint').textContent = `${selectedKarat}K rate selected`;
+  calculate();
+}
+
+function setSelectedRateFromInput() {
+  const rate = numberValue('gold-rate');
+  if (rate > 0) {
+    liveRates[selectedKarat] = rate;
+    rateSource = 'manual';
+    saveManualRates(liveRates);
+    setLiveBadge('Manual rate');
+    renderRates();
   }
   calculate();
 }
 
-function selectKarat(k) {
-  selectedKarat = k;
-  [18,22,24].forEach(x => {
-    document.getElementById('kb'+x).classList.toggle('active', x===k);
-    document.getElementById('rate-'+x).classList.toggle('active', x===k);
+function toggleManualRates() {
+  const enabled = $('manual-rate-toggle').checked;
+  $('rate-editor').classList.toggle('active', enabled);
+  if (enabled) {
+    rateSource = 'manual';
+    setLiveBadge('Manual rate');
+  }
+}
+
+function updateManualRateInputs() {
+  KARATS.forEach(karat => {
+    const input = $(`manual-rate-${karat}`);
+    if (input) input.value = liveRates[karat] ? liveRates[karat].toFixed(2) : '';
   });
+}
+
+function applyManualRates() {
+  KARATS.forEach(karat => {
+    const value = numberValue(`manual-rate-${karat}`);
+    if (value > 0) liveRates[karat] = value;
+  });
+  rateSource = 'manual';
+  saveManualRates(liveRates);
+  setLiveBadge('Manual rate');
+  renderRates();
   updateRateDisplay();
 }
 
-function calculate() {
-  const rate = liveRates[selectedKarat] || 0;
-  const weight = parseFloat(document.getElementById('gold-weight').value) || 0;
-  const makingPct = parseFloat(document.getElementById('making-pct').value) || 0;
-  const wastagePct = parseFloat(document.getElementById('wastage-pct').value) || 0;
-  const taxPct = parseFloat(document.getElementById('tax-pct').value) || 0;
+function saveManualRates(rates) {
+  localStorage.setItem(STORAGE_KEYS.manualRates, JSON.stringify(rates));
+}
 
-  const goldVal = rate * weight;
-  const makingAmt = goldVal * makingPct / 100;
-  const wastageAmt = goldVal * wastagePct / 100;
-  const subtotal = goldVal + makingAmt + wastageAmt;
-  const taxAmt = subtotal * taxPct / 100;
-  const total = subtotal + taxAmt;
+function loadManualRates() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.manualRates) || '{}');
+  } catch {
+    return {};
+  }
+}
 
-  const fmt = v => '₹ ' + v.toFixed(2);
-  const fmtInt = v => '₹ ' + Math.round(v).toLocaleString('en-IN');
-
-  document.getElementById('gold-amt').textContent = fmt(goldVal);
-  document.getElementById('making-amt').value = fmt(makingAmt);
-  document.getElementById('wastage-amt').value = fmt(wastageAmt);
-  document.getElementById('tax-amt').value = fmt(taxAmt);
-  document.getElementById('b-gold').textContent = fmtInt(goldVal);
-  document.getElementById('b-making').textContent = fmtInt(makingAmt);
-  document.getElementById('b-wastage').textContent = fmtInt(wastageAmt);
-  document.getElementById('b-tax').textContent = fmtInt(taxAmt);
-  document.getElementById('total-amt').textContent = fmt(total);
+function renderCategories() {
+  const query = $('category-search').value.trim().toLowerCase();
+  const entries = Object.entries(CATEGORIES).filter(([, cat]) => {
+    return `${cat.name} ${cat.note}`.toLowerCase().includes(query);
+  });
+  $('categories-grid').innerHTML = entries.map(([key, cat]) => `
+    <a class="cat-card" href="#calculator" onclick="openCategory('${key}')">
+      <div class="cat-icon">${cat.icon}</div>
+      <div>
+        <div class="cat-name">${cat.name}</div>
+        <div class="cat-sub">${cat.note}</div>
+      </div>
+      <div class="cat-meta">
+        <span>${cat.karat}K</span>
+        <span>Making ${cat.making}${cat.makingType === 'percent' ? '%' : cat.makingType === 'perGram' ? '/g' : ''}</span>
+        <span>Wastage ${cat.wastage}${cat.wastageType === 'percent' ? '%' : cat.wastageType === 'grams' ? 'g' : ''}</span>
+      </div>
+    </a>
+  `).join('') || '<div class="empty-state">No categories match your search.</div>';
 }
 
 function openCategory(key) {
   const cat = CATEGORIES[key];
-  document.getElementById('calc-icon').textContent = cat.icon;
-  document.getElementById('calc-title').textContent = cat.name;
-  document.getElementById('making-pct').value = cat.making;
-  document.getElementById('wastage-pct').value = cat.wastage;
-  document.getElementById('tax-pct').value = cat.tax;
-  document.getElementById('gold-weight').value = '';
-  selectKarat(24);
-  calculate();
-  document.getElementById('page-index').classList.remove('active');
-  document.getElementById('page-calc').classList.add('active');
-  window.scrollTo(0,0);
+  currentCategoryKey = key;
+  $('calc-icon').textContent = cat.icon;
+  $('calc-title').textContent = cat.name;
+  $('calc-subtitle').textContent = `${cat.note} · GST ${cat.tax}%`;
+  $('making-type').value = cat.makingType;
+  $('making-value').value = cat.making;
+  $('wastage-type').value = cat.wastageType;
+  $('wastage-value').value = cat.wastage;
+  $('tax-pct').value = cat.tax;
+  $('quantity').value = 1;
+  $('discount').value = 0;
+  $('stone-charge').value = 0;
+  $('hallmark-charge').value = 0;
+  $('rounding-mode').value = 'none';
+  $('estimate-id').value = buildEstimateId();
+  $('customer-name').value = '';
+  $('notes').value = '';
+  selectKarat(cat.karat);
+  $('page-index').classList.remove('active');
+  $('page-calc').classList.add('active');
+  window.scrollTo(0, 0);
 }
 
 function goBack() {
-  document.getElementById('page-calc').classList.remove('active');
-  document.getElementById('page-index').classList.add('active');
-  window.scrollTo(0,0);
+  $('page-calc').classList.remove('active');
+  $('page-index').classList.add('active');
+  renderHistory();
+  window.scrollTo(0, 0);
+}
+
+function buildEstimateId() {
+  const now = new Date();
+  return `GPC-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
+function chargeFromType(type, value, goldValue, totalWeight, rate) {
+  if (type === 'percent') return goldValue * value / 100;
+  if (type === 'perGram') return totalWeight * value;
+  if (type === 'grams') return rate * value;
+  return value;
+}
+
+function applyRounding(total, mode) {
+  if (mode === 'nearest') return Math.round(total);
+  if (mode === 'up') return Math.ceil(total);
+  return total;
+}
+
+function calculate() {
+  const rate = liveRates[selectedKarat] || numberValue('gold-rate');
+  const weight = numberValue('gold-weight');
+  const quantity = Math.max(1, Math.floor(numberValue('quantity') || 1));
+  const totalWeight = weight * quantity;
+  const goldValue = rate * totalWeight;
+  const makingAmount = chargeFromType($('making-type').value, numberValue('making-value'), goldValue, totalWeight, rate);
+  const wastageAmount = chargeFromType($('wastage-type').value, numberValue('wastage-value'), goldValue, totalWeight, rate);
+  const stoneCharge = numberValue('stone-charge');
+  const hallmarkCharge = numberValue('hallmark-charge');
+  const discount = Math.min(numberValue('discount'), goldValue + makingAmount + wastageAmount + stoneCharge + hallmarkCharge);
+  const subtotal = goldValue + makingAmount + wastageAmount + stoneCharge + hallmarkCharge - discount;
+  const taxAmount = subtotal * numberValue('tax-pct') / 100;
+  const rawTotal = subtotal + taxAmount;
+  const total = applyRounding(rawTotal, $('rounding-mode').value);
+  const roundingAmount = total - rawTotal;
+  const category = CATEGORIES[currentCategoryKey];
+
+  lastEstimate = {
+    id: $('estimate-id').value || buildEstimateId(),
+    customer: $('customer-name').value.trim(),
+    categoryKey: currentCategoryKey,
+    categoryName: category.name,
+    karat: selectedKarat,
+    rate,
+    weight,
+    quantity,
+    totalWeight,
+    goldValue,
+    makingAmount,
+    wastageAmount,
+    stoneCharge,
+    hallmarkCharge,
+    discount,
+    subtotal,
+    taxPct: numberValue('tax-pct'),
+    taxAmount,
+    roundingAmount,
+    total,
+    notes: $('notes').value.trim(),
+    createdAt: new Date().toISOString()
+  };
+
+  $('total-amt').textContent = formatMoney(total);
+  $('hero-total').textContent = formatMoney(total);
+  $('hero-caption').textContent = `${category.name} · ${selectedKarat}K · ${totalWeight.toFixed(3)} g`;
+  $('gold-amt').textContent = formatMoney(goldValue);
+  $('rate-used').textContent = `${formatMoneyShort(rate)}/g`;
+  $('weight-used').textContent = `${totalWeight.toFixed(3)} g`;
+  $('tax-amt').textContent = formatMoney(taxAmount);
+  $('summary-sub').textContent = `${lastEstimate.id}${lastEstimate.customer ? ' · ' + lastEstimate.customer : ''}`;
+
+  renderBreakdown(lastEstimate);
+  return lastEstimate;
+}
+
+function renderBreakdown(estimate) {
+  const rows = [
+    ['Gold value', estimate.goldValue],
+    ['Making charges', estimate.makingAmount],
+    ['Wastage', estimate.wastageAmount],
+    ['Stone / diamond', estimate.stoneCharge],
+    ['Hallmark / other', estimate.hallmarkCharge],
+    ['Discount', -estimate.discount],
+    ['Subtotal', estimate.subtotal],
+    [`GST / tax (${estimate.taxPct}%)`, estimate.taxAmount],
+    ['Rounding', estimate.roundingAmount],
+    ['Total amount', estimate.total, true]
+  ];
+  $('breakdown-list').innerHTML = rows.map(([label, amount, total]) => `
+    <div class="breakdown-row ${total ? 'total' : ''}">
+      <span>${label}</span>
+      <strong>${formatMoney(amount)}</strong>
+    </div>
+  `).join('');
 }
 
 function resetCalc() {
-  document.getElementById('gold-weight').value = '';
-  selectKarat(24);
+  const current = currentCategoryKey;
+  openCategory(current);
+  $('gold-weight').value = '';
   calculate();
 }
 
-fetchRates();
-setInterval(fetchRates, 60000);
+function estimateText(estimate = lastEstimate) {
+  if (!estimate) return '';
+  return [
+    'Gold Price Estimate',
+    `Estimate: ${estimate.id}`,
+    estimate.customer ? `Customer: ${estimate.customer}` : null,
+    `Item: ${estimate.categoryName} (${estimate.karat}K)`,
+    `Rate: ${formatMoney(estimate.rate)} / gram`,
+    `Weight: ${estimate.totalWeight.toFixed(3)} g (${estimate.quantity} pcs)`,
+    `Gold value: ${formatMoney(estimate.goldValue)}`,
+    `Making: ${formatMoney(estimate.makingAmount)}`,
+    `Wastage: ${formatMoney(estimate.wastageAmount)}`,
+    `GST: ${formatMoney(estimate.taxAmount)}`,
+    `Total: ${formatMoney(estimate.total)}`,
+    estimate.notes ? `Notes: ${estimate.notes}` : null
+  ].filter(Boolean).join('\n');
+}
+
+async function copyEstimate() {
+  const text = estimateText();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Estimate copied');
+  } catch {
+    showToast('Copy failed in this browser');
+  }
+}
+
+async function shareEstimate() {
+  const text = estimateText();
+  if (!text) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Gold Price Estimate', text });
+      showToast('Share sheet opened');
+      return;
+    } catch {
+      return;
+    }
+  }
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  window.open(whatsappUrl, '_blank', 'noopener');
+}
+
+function saveEstimate() {
+  const estimate = calculate();
+  const history = loadHistory();
+  history.unshift(estimate);
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history.slice(0, 12)));
+  renderHistory();
+  showToast('Estimate saved');
+}
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  if (!history.length) {
+    $('history-grid').innerHTML = '<div class="empty-state">No saved estimates yet. Calculate an item and press Save.</div>';
+    return;
+  }
+  $('history-grid').innerHTML = history.map((estimate, index) => `
+    <article class="history-card">
+      <h3>${estimate.categoryName} · ${estimate.karat}K</h3>
+      <p>${new Date(estimate.createdAt).toLocaleString('en-IN')}<br>${estimate.totalWeight.toFixed(3)} g at ${formatMoneyShort(estimate.rate)}/g</p>
+      <strong>${formatMoney(estimate.total)}</strong>
+      <div class="history-actions">
+        <button class="small-btn" type="button" onclick="loadEstimate(${index})">Load</button>
+        <button class="small-btn" type="button" onclick="deleteEstimate(${index})">Delete</button>
+      </div>
+    </article>
+  `).join('');
+}
+
+function loadEstimate(index) {
+  const estimate = loadHistory()[index];
+  if (!estimate) return;
+  const categoryKey = estimate.categoryKey || 'custom';
+  openCategory(categoryKey);
+  selectedKarat = estimate.karat;
+  liveRates[selectedKarat] = estimate.rate;
+  renderRates();
+  renderKaratButtons();
+  $('gold-rate').value = estimate.rate.toFixed(2);
+  $('gold-weight').value = estimate.weight;
+  $('quantity').value = estimate.quantity;
+  $('stone-charge').value = estimate.stoneCharge;
+  $('hallmark-charge').value = estimate.hallmarkCharge;
+  $('discount').value = estimate.discount;
+  $('tax-pct').value = estimate.taxPct;
+  $('customer-name').value = estimate.customer || '';
+  $('estimate-id').value = estimate.id;
+  $('notes').value = estimate.notes || '';
+  calculate();
+  showToast('Estimate loaded');
+}
+
+function deleteEstimate(index) {
+  const history = loadHistory();
+  history.splice(index, 1);
+  localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(history));
+  renderHistory();
+}
+
+function clearHistory() {
+  localStorage.removeItem(STORAGE_KEYS.history);
+  renderHistory();
+  showToast('History cleared');
+}
+
+function downloadCSV() {
+  const estimate = calculate();
+  const rows = [
+    ['Field', 'Value'],
+    ['Estimate ID', estimate.id],
+    ['Customer', estimate.customer],
+    ['Category', estimate.categoryName],
+    ['Karat', estimate.karat],
+    ['Rate per gram', estimate.rate],
+    ['Total weight', estimate.totalWeight],
+    ['Gold value', estimate.goldValue],
+    ['Making charges', estimate.makingAmount],
+    ['Wastage', estimate.wastageAmount],
+    ['Stone charge', estimate.stoneCharge],
+    ['Hallmark charge', estimate.hallmarkCharge],
+    ['Discount', estimate.discount],
+    ['Tax', estimate.taxAmount],
+    ['Total', estimate.total],
+    ['Notes', estimate.notes]
+  ];
+  const csv = rows.map(row => row.map(value => `"${String(value ?? '').replaceAll('"', '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${estimate.id}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = current;
+  localStorage.setItem(STORAGE_KEYS.theme, current);
+  $('theme-btn').textContent = current === 'dark' ? 'Light Mode' : 'Dark Mode';
+}
+
+function showToast(message) {
+  const toast = $('toast');
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+function initTheme() {
+  const theme = localStorage.getItem(STORAGE_KEYS.theme) || 'light';
+  document.documentElement.dataset.theme = theme;
+  $('theme-btn').textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+}
+
+function init() {
+  initTheme();
+  renderKaratButtons();
+  renderCategories();
+  renderHistory();
+  $('estimate-id').value = buildEstimateId();
+  fetchRates();
+  setInterval(fetchRates, 60000);
+}
+
+init();
 </script>
 </body>
 </html>
