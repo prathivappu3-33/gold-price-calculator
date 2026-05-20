@@ -1,0 +1,17 @@
+# Terraform local files
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!.terraform.lock.hcl
+!terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Local editor and OS files
+.DS_Store
+*.swp
